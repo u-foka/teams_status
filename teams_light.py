@@ -15,8 +15,8 @@
 # 7. Not required: update the hard interval update to the desired amount of time in seconds (line 49)
 # 8. If you want to run this on startup... Make a shortcut to teams_light.py, move the short cut here: %appdata%\Microsoft\Windows\Start Menu\Programs\Startup
 
-from time import sleep,time
-import paho.mqtt.client as mqtt         # You must install this dependency! https://pypi.org/project/paho-mqtt/#installation
+import serial
+from time import sleep,time       # You must install this dependency! https://pypi.org/project/paho-mqtt/#installation
 from teams_status import teamsStatus
 
 # Set to false if you want to set custom instructions for your lighting subscriber.
@@ -31,14 +31,10 @@ custom_return = {"Green": "YOUR VALUE FOR GREEN",
                 "Off": "YOUR VALUE FOR OFF"
                 }
 
-# UDPATE with IP of your local broker OR public.
-mqtt_broker = "xxx.xxx.x.xxx" #Avoid using "localhost"
+com_port = "COM9"
 
 # UPDATE with your filepath to the folder that contains logs.txt! 
-filepath = "C:\\Users\\username\\AppData\\Roaming\\Microsoft\\Teams"
-
-# Topic can be updated to whatever you want just ensure that the device subscribed shares the same topic name.
-topic = "TEAMS_STATUS"
+filepath = "C:\\Users\\z003213d\\AppData\\Roaming\\Microsoft\\Teams"
 
 # Temp var to store that last status reported.
 last_status = None
@@ -47,6 +43,10 @@ last_status = None
 # If you don't want a hard interval check, set to very large value.
 start = 0
 interval = 10 #UPDATE if desired
+
+ser = serial.Serial()
+ser.baudrate = 9600
+ser.port = com_port
 
 # Instatiate the teams status class, leave kwargs empty for default settings. The logic instatiates the class based on
 # the default_instruction variable above.
@@ -61,10 +61,6 @@ elif default_instruction == False:
                         filepath=filepath
                         )
 
-# Instatiate the mqtt client library, update the client name to whatever you want..
-client = mqtt.Client("WorkPC")
-client.connect(mqtt_broker)
-
 # A forever while loop since this is designed to run on start up and not shut down.
 while True:
     # Get the current Teams status.
@@ -72,15 +68,18 @@ while True:
     # Get the RGB color from the current Teams status.
     color, color_name = teams.status_color(status)
 
-    # Pubish the instructions to the MQTT broker.
+    # Check if the status changed
     if status != last_status or interval <= time()-start:
-        instruction = f'{color[0]},{color[1]},{color[2]}'
-        client.publish(topic,instruction)
         print(f'Current Teams Status: {status} | Status Color: {color_name}')
+        if not ser.is_open:
+            ser.open()
+        if ser.is_open:
+            command = f'{color[0]},{color[1]},{color[2]} 1000\n'
+            ser.write(command.encode())
+            ser.flush()
+
         start = time()
-    # Do nothing if the status hasn't changed or interval requirement has not been met.
-    else:
-        pass
+    
     # Sleep for one second to reduce the amount of log file reads (in seconds).
     sleep(1)
     # Store the last known status change in the temp variable.
