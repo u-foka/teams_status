@@ -3,17 +3,18 @@
 class teamsStatus():
 
     def __init__(self, 
-                Available = 'Added Available',
-                Busy = 'Added Busy',
-                DoNotDisturb = 'Added DoNotDisturb',
-                BeRightBack = 'Added BeRightBack',
-                OnThePhone = "Added OnThePhone",
-                Presenting = "Added Presenting",
-                InAMeeting = "Added InAMeeting",
-                Away = 'Added Away',
-                Offline = 'Offline',
+                Available = ' -> Available',
+                Busy = ' -> Busy',
+                DoNotDisturb = ' -> DoNotDisturb',
+                BeRightBack = ' -> BeRightBack',
+                OnThePhone = ' -> OnThePhone',
+                Presenting = ' -> Presenting',
+                InAMeeting = ' -> InAMeeting',
+                Away = ' -> Away',
+                Focusing = ' -> Focusing',
+                Offline = ' -> Offline',
                 green_hue = (0,255,0),
-                yellow_hue = (255,255,0),
+                yellow_hue = (255,120,0),
                 red_hue = (255,0,0),
                 off_hue = (0,0,0),
                 filepath = "C:\\Users\\username\\AppData\\Roaming\\Microsoft\\Teams"
@@ -31,6 +32,7 @@ class teamsStatus():
         self.Presenting = Presenting
         self.InAMeeting = InAMeeting
         self.Away = Away
+        self.Focusing = Focusing
         self.Offline = Offline
         
         # Initialize a last known status variable and colors for the lights 
@@ -55,10 +57,12 @@ class teamsStatus():
                 self.InAMeeting,
                 self.OnThePhone,
                 self.Presenting,
+                self.Focusing,
                 self.Offline]
 
         # Look for this string in the MSFT Teams log file
-        indicator = 'StatusIndicatorStateService: Added '
+        #indicator = 'StatusIndicatorStateService: Added '
+        indicator = '(current state: '
 
         # Open the log file
         log_file = open(f"{self.filepath}\\logs.txt", "r")
@@ -101,7 +105,7 @@ class teamsStatus():
         if status == self.Available:
             self.last_known_status = status
             return self.green, "Green"      
-        if status == self.DoNotDisturb or status == self.Busy or status == self.InAMeeting or status == self.OnThePhone or status == self.Presenting:
+        if status == self.DoNotDisturb or status == self.Busy or status == self.InAMeeting or status == self.OnThePhone or status == self.Presenting or status == self.Focusing:
             self.last_known_status = status
             return self.red, "Red"          
         if status == self.Offline:
